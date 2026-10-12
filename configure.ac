@@ -62,6 +62,19 @@ AC_CHECK_HEADERS([stdlib.h string.h unistd.h limits.h arpa/inet.h fcntl.h malloc
 AC_CHECK_HEADER([curses.h],,[AC_MSG_ERROR([ncurses header files are required for building ppc64-diag])])
 AC_CHECK_HEADER([libudev.h],,[AC_MSG_ERROR([libudev header files are required for building ppc64-diag])])
 
+dnl Enable _FORTIFY_SOURCE only when optimization is enabled
+AC_MSG_CHECKING([whether optimization is enabled])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[]], [[
+# ifndef __OPTIMIZE__
+# error Compiler optimization is disabled
+# endif
+  ]])],
+  [FORTIFY_CFLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3"
+   AC_MSG_RESULT([yes, using $FORTIFY_CFLAGS])],
+  [FORTIFY_CFLAGS=""
+   AC_MSG_RESULT([no, _FORTIFY_SOURCE disabled])])
+AC_SUBST([FORTIFY_CFLAGS])
 
 # check for librtas
 AC_ARG_WITH([librtas],
@@ -139,7 +152,7 @@ AC_DEFUN([LOCAL_CHECK_FLAGS],[
   AC_REQUIRE([AX_APPEND_COMPILE_FLAGS])
   AC_LANG_PUSH([C])
   AX_APPEND_COMPILE_FLAGS([-Wall])
-  AX_APPEND_COMPILE_FLAGS([-D_FORTIFY_SOURCE=2 -fstack-protector-all])
+  AX_APPEND_COMPILE_FLAGS([-fstack-protector-all])
   AX_APPEND_COMPILE_FLAGS([-fwrapv -fPIE -Wstack-protector])
   AX_APPEND_COMPILE_FLAGS([--param=ssp-buffer-size=1])
   AX_CHECK_LINK_FLAG([-z relro -z now])
